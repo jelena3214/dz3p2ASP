@@ -164,6 +164,7 @@ void deleteGraph(struct graph* maingraph, int* arr) {
 
 struct Qnode {
 	int* info;
+	int stepFlag;
 	int len;
 	struct Qnode* next;
 }QNODE;
@@ -180,16 +181,17 @@ struct queue* createQueue() {
 	return Q;
 }
 
-struct Qnode* createQueueNode(int size) {
+struct Qnode* createQueueNode(int size, int flag) {
 	struct Qnode* newnode = malloc(sizeof(struct Qnode));
 	newnode->info = malloc(sizeof(int) * (size + 1));
 	newnode->next = NULL;
 	newnode->len = size;
+	newnode->stepFlag = flag;
 	return newnode;
 }
 
-struct queue* insertQueue(struct queue* Q, int *info, int size) {
-	struct Qnode *newnode = createQueueNode(size);
+struct queue* insertQueue(struct queue* Q, int *info, int size, int flag) {
+	struct Qnode *newnode = createQueueNode(size, flag);
 	for (int i = 0; i < size; i++) {
 		newnode->info[i] = info[i];
 	}
@@ -242,7 +244,7 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
 	lenght++;
-	q = insertQueue(q, path, lenght);
+	q = insertQueue(q, path, lenght, 0);
 
 	while (!QueueEmpty(q)) {
 		lenght = q->front->len;
@@ -265,7 +267,7 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 				}
 				newpath[lenght] = p->info;
 				
-				q = insertQueue(q, newpath, (lenght + 1));
+				q = insertQueue(q, newpath, (lenght + 1), 0);
 			}
 			p = p->next;
 		}
@@ -274,21 +276,26 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 //dodaj deo sta ako nema puta do tog cvora
 
 void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
-	int stepCount = 1;
+
+	int flag;
 	struct queue* q = createQueue();
 	int* path = NULL;
 	int lenght = 0;
 	int onesize = 1, twosize = 0;
-	int* oneVisit = malloc(sizeof(int)*onesize);
-	oneVisit[0] = source;
-	int* twoVisit = NULL;
+	//int* oneVisit = malloc(sizeof(int));
+	//oneVisit[0] = source;
+	//int* twoVisit = NULL;
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
 	lenght++;
-	q = insertQueue(q, path, lenght);
+	q = insertQueue(q, path, lenght, 1);
+
+	int* oneVisit = calloc(maingraph->numofNodes, sizeof(int));
+	int* twoVisit = calloc(maingraph->numofNodes, sizeof(int));
 
 	while (!QueueEmpty(q)) {
 		lenght = q->front->len;
+		int flag = q->front->stepFlag;
 		path = popFromQueue(q, lenght);
 		int last = path[lenght - 1];
 		
@@ -297,37 +304,35 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 				printf("%d ", path[i]);
 			}
 			putchar('\n');
+			continue;
 		}
-
-		if (stepCount % 2) { //pomeranje za 1
-			
+		
+		//razgranici kad ide koji korak
+		if (flag) { //pomeranje za 1
 			struct node* p = maingraph->adjList[last].head;
 			while (p != NULL) {
-				if (isNotVisited(p->info, oneVisit, onesize)) {
-					oneVisit = realloc(oneVisit, sizeof(int) * (++onesize));
-					oneVisit[onesize] = p->info;
-
+				if (oneVisit[p->info] <= lenght) {
 					int* newpath = malloc((lenght + 1) * sizeof(int));
 					for (int j = 0; j < lenght; j++) {
 						newpath[j] = path[j];
 					}
 					newpath[lenght] = p->info;
-
-					q = insertQueue(q, newpath, (lenght + 1));
+					oneVisit[p->info] = lenght + 1;
+					q = insertQueue(q, newpath, (lenght + 1), 0);
 				}
 				p = p->next;
 			}
 		}
 		else {
 			struct node* temp = maingraph->adjList[last].head;
+			int* visitedInthis = calloc(maingraph->numofNodes, sizeof(int));
 			while (temp != NULL) {
-				int* visitedInthis = calloc(maingraph->numofNodes, sizeof(int));
 				last = temp->info;
 				struct node* p = maingraph->adjList[last].head;
 				while (p != NULL) {
-					if (!(!isNotVisited(p->info, twoVisit, twosize) && !visitedInthis[p->info])) {
-						twoVisit = realloc(twoVisit, sizeof(int) * (twosize + 1));
-						twoVisit[twosize++] = p->info;
+					//za posecenost
+					if ((twoVisit[p->info] <= lenght) || visitedInthis[p->info]) {
+						twoVisit[p->info] = lenght + 2;
 						visitedInthis[p->info] = 1;
 
 						int* newpath = malloc((lenght + 2) * sizeof(int));
@@ -336,16 +341,15 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 						}
 						newpath[lenght] = temp->info;
 						newpath[lenght + 1] = p->info;
-						q = insertQueue(q, newpath, (lenght + 2));
+						q = insertQueue(q, newpath, (lenght + 2), 1);
 					}
 					p = p->next;
 				}
-				free(visitedInthis);
 				temp = temp->next;
 			}
-			
+			free(visitedInthis);
 		}
-		stepCount++;
+		
 	}
 
 }
@@ -360,9 +364,9 @@ int main() {
 
 	addBranch(tryit, 0, 1);
 	addBranch(tryit, 5, 2);
-	addBranch(tryit, 1, 3);
-	addBranch(tryit, 4, 5);
 	addBranch(tryit, 1, 2);
+	addBranch(tryit, 4, 5);
+	addBranch(tryit, 1, 3);
 	addBranch(tryit, 2, 4);
 	addBranch(tryit, 5, 0);
 	addBranch(tryit, 3, 4);
