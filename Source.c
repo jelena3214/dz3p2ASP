@@ -271,6 +271,84 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 		}
 	}
 }
+//dodaj deo sta ako nema puta do tog cvora
+
+void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
+	int stepCount = 1;
+	struct queue* q = createQueue();
+	int* path = NULL;
+	int lenght = 0;
+	int onesize = 1, twosize = 0;
+	int* oneVisit = malloc(sizeof(int)*onesize);
+	oneVisit[0] = source;
+	int* twoVisit = NULL;
+	path = realloc(path, sizeof(int) * (lenght + 1));
+	path[lenght] = source;
+	lenght++;
+	q = insertQueue(q, path, lenght);
+
+	while (!QueueEmpty(q)) {
+		lenght = q->front->len;
+		path = popFromQueue(q, lenght);
+		int last = path[lenght - 1];
+		
+		if (last == destination) {
+			for (int i = 0; i < lenght; i++) {
+				printf("%d ", path[i]);
+			}
+			putchar('\n');
+		}
+
+		if (stepCount % 2) { //pomeranje za 1
+			
+			struct node* p = maingraph->adjList[last].head;
+			while (p != NULL) {
+				if (isNotVisited(p->info, oneVisit, onesize)) {
+					oneVisit = realloc(oneVisit, sizeof(int) * (++onesize));
+					oneVisit[onesize] = p->info;
+
+					int* newpath = malloc((lenght + 1) * sizeof(int));
+					for (int j = 0; j < lenght; j++) {
+						newpath[j] = path[j];
+					}
+					newpath[lenght] = p->info;
+
+					q = insertQueue(q, newpath, (lenght + 1));
+				}
+				p = p->next;
+			}
+		}
+		else {
+			struct node* temp = maingraph->adjList[last].head;
+			while (temp != NULL) {
+				int* visitedInthis = calloc(maingraph->numofNodes, sizeof(int));
+				last = temp->info;
+				struct node* p = maingraph->adjList[last].head;
+				while (p != NULL) {
+					if (!(!isNotVisited(p->info, twoVisit, twosize) && !visitedInthis[p->info])) {
+						twoVisit = realloc(twoVisit, sizeof(int) * (twosize + 1));
+						twoVisit[twosize++] = p->info;
+						visitedInthis[p->info] = 1;
+
+						int* newpath = malloc((lenght + 2) * sizeof(int));
+						for (int j = 0; j < lenght; j++) {
+							newpath[j] = path[j];
+						}
+						newpath[lenght] = temp->info;
+						newpath[lenght + 1] = p->info;
+						q = insertQueue(q, newpath, (lenght + 2));
+					}
+					p = p->next;
+				}
+				free(visitedInthis);
+				temp = temp->next;
+			}
+			
+		}
+		stepCount++;
+	}
+
+}
 
 int main() {
 	int choice, num, i;
@@ -281,12 +359,14 @@ int main() {
 	struct graph* tryit = createGraph(graphSize);
 
 	addBranch(tryit, 0, 1);
-	addBranch(tryit, 0, 2);
-	addBranch(tryit, 0, 3);
-	addBranch(tryit, 2, 0);
-	addBranch(tryit, 2, 1);
+	addBranch(tryit, 5, 2);
 	addBranch(tryit, 1, 3);
-	pathsPlayerOne(tryit, 2, 3);
+	addBranch(tryit, 4, 5);
+	addBranch(tryit, 1, 2);
+	addBranch(tryit, 2, 4);
+	addBranch(tryit, 5, 0);
+	addBranch(tryit, 3, 4);
+	pathsPlayerTwo(tryit, 0, 2);
 	/*while (1)
 	{
 		printf("1. Dodaj nov cvor u graf\n");
