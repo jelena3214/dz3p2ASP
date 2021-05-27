@@ -290,8 +290,12 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 	lenght++;
 	q = insertQueue(q, path, lenght, 1);
 
-	int* oneVisit = calloc(maingraph->numofNodes, sizeof(int));
-	int* twoVisit = calloc(maingraph->numofNodes, sizeof(int));
+	int* oneVisit = malloc(maingraph->numofNodes*sizeof(int));
+	int* twoVisit = malloc(maingraph->numofNodes*sizeof(int));
+	for (int i = 0; i < maingraph->numofNodes; i++) {
+		oneVisit[i] = INT_MAX;
+		twoVisit[i] = INT_MAX;
+	}
 
 	while (!QueueEmpty(q)) {
 		lenght = q->front->len;
@@ -311,7 +315,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 		if (flag) { //pomeranje za 1
 			struct node* p = maingraph->adjList[last].head;
 			while (p != NULL) {
-				if (oneVisit[p->info] <= lenght) {
+				if (oneVisit[p->info] >= lenght + 1) {
 					int* newpath = malloc((lenght + 1) * sizeof(int));
 					for (int j = 0; j < lenght; j++) {
 						newpath[j] = path[j];
@@ -331,7 +335,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 				struct node* p = maingraph->adjList[last].head;
 				while (p != NULL) {
 					//za posecenost
-					if ((twoVisit[p->info] <= lenght) || visitedInthis[p->info]) {
+					if ((twoVisit[p->info] >= lenght + 2) || visitedInthis[p->info]) {
 						twoVisit[p->info] = lenght + 2;
 						visitedInthis[p->info] = 1;
 
