@@ -162,6 +162,12 @@ void deleteGraph(struct graph* maingraph, int* arr) {
 	free(maingraph);
 }
 
+struct Qnode {
+	int* info;
+	int len;
+	struct Qnode* next;
+}QNODE;
+
 struct queue {
 	struct Qnode *front;
 	struct Qnode *rear;
@@ -174,21 +180,17 @@ struct queue* createQueue() {
 	return Q;
 }
 
-struct Qnode {
-	int *info;
-	struct Qnode* next;
-}QNODE;
-
 struct Qnode* createQueueNode(int size) {
 	struct Qnode* newnode = malloc(sizeof(struct Qnode));
 	newnode->info = malloc(sizeof(int) * (size + 1));
 	newnode->next = NULL;
+	newnode->len = size;
 	return newnode;
 }
 
-struct queue* insertQueue(struct queue* Q, int *info) {
-	struct Qnode *newnode = createQueueNode(sizeof(info) / sizeof(int));
-	for (int i = 0; i < (sizeof(info) / sizeof(int)); i++) {
+struct queue* insertQueue(struct queue* Q, int *info, int size) {
+	struct Qnode *newnode = createQueueNode(size);
+	for (int i = 0; i < size; i++) {
 		newnode->info[i] = info[i];
 	}
 	if (Q->rear == NULL) {
@@ -201,16 +203,14 @@ struct queue* insertQueue(struct queue* Q, int *info) {
 	return Q;
 }
 
-int *popFromQueue(struct queue *Q) {
+int *popFromQueue(struct queue *Q, int size) {
 	if (Q->front == NULL) {
 		return NULL;
 	}
-	int size = sizeof(Q->front->info) / sizeof(int);
 	int *temp = calloc((size + 1), sizeof(int));
 	for (int j = 0; j < size; j++) {
 		temp[j] = Q->front->info[j];
 	}
-	//int *temp = Q->front->info;
 	
 	Q->front = Q->front->next;
 	if (Q->front == NULL) {
@@ -226,9 +226,8 @@ int QueueEmpty(struct queue *q) {
 	return 0;
 }
 
-int isNotVisited(int x, int *path)
+int isNotVisited(int x, int *path, int size)
 {
-	int size = sizeof(path)/sizeof(int);
 	for (int i = 0; i < size; i++)
 		if (path[i] == x)
 			return 0;
@@ -238,38 +237,35 @@ int isNotVisited(int x, int *path)
 void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 	struct queue *q = createQueue();
 	int *path = NULL;
-	//int* visit = calloc(maingraph->numofNodes, sizeof(int));
 	int lenght = 0;
 
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
-	//visit[source] = 1;
 	lenght++;
-	q = insertQueue(q, path);
+	q = insertQueue(q, path, lenght);
 
 	while (!QueueEmpty(q)) {
-		path = popFromQueue(q);
-		
-		lenght = sizeof(path) / sizeof(int);
+		lenght = q->front->len;
+		path = popFromQueue(q, lenght);
 		int last = path[lenght - 1];
 		
+
 		if (last == destination) {
 			for (int i = 0; i < lenght; i++) {
 				printf("%d ", path[i]);
-				putchar('\n');
 			}
+			putchar('\n');
 		}
 		struct node *p = maingraph->adjList[last].head;
 		while (p != NULL) {
-			if (isNotVisited(p->info, path)) {
-				int size = (sizeof(path) / sizeof(int));
-				int *newpath = calloc((size + 1), sizeof(int));
-				for (int j = 0; j < size; j++) {
+			if (isNotVisited(p->info, path, lenght)) {
+				int *newpath = malloc((lenght + 1)*sizeof(int));
+				for (int j = 0; j < lenght; j++) {
 					newpath[j] = path[j];
 				}
-				newpath[size] = p->info;
+				newpath[lenght] = p->info;
 				
-				q = insertQueue(q, newpath);
+				q = insertQueue(q, newpath, (lenght + 1));
 			}
 			p = p->next;
 		}
