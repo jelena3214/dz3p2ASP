@@ -1,3 +1,4 @@
+//spec slucajevi ZA PARNE POTEZE NE SME U ONAJ KOJI NEMA SINA(NULL), 
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
@@ -237,6 +238,7 @@ int isNotVisited(int x, int *path, int size)
 }
 
 void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
+	int minMove = INT_MAX;
 	struct queue *q = createQueue();
 	int *path = NULL;
 	int lenght = 0;
@@ -253,10 +255,12 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 		
 
 		if (last == destination) {
+			if (lenght < minMove)minMove = lenght;
 			for (int i = 0; i < lenght; i++) {
 				printf("%d ", path[i]);
 			}
 			putchar('\n');
+		
 		}
 		struct node *p = maingraph->adjList[last].head;
 		while (p != NULL) {
@@ -272,19 +276,17 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 			p = p->next;
 		}
 	}
+	printf("MINMOVE : %d\n", minMove);
 }
 //dodaj deo sta ako nema puta do tog cvora
 
 void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
-
+	int minMove = INT_MAX; //ovo stavi da bude info cvora jer se povecava za po jedan a ne len
 	int flag;
 	struct queue* q = createQueue();
 	int* path = NULL;
 	int lenght = 0;
 	int onesize = 1, twosize = 0;
-	//int* oneVisit = malloc(sizeof(int));
-	//oneVisit[0] = source;
-	//int* twoVisit = NULL;
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
 	lenght++;
@@ -304,6 +306,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 		int last = path[lenght - 1];
 		
 		if (last == destination) {
+			if (lenght < minMove)minMove = lenght;
 			for (int i = 0; i < lenght; i++) {
 				printf("%d ", path[i]);
 			}
@@ -355,6 +358,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 		}
 		
 	}
+	printf("MINMOVE : %d\n", minMove);
 
 }
 
@@ -370,11 +374,12 @@ int main() {
 	addBranch(tryit, 5, 2);
 	addBranch(tryit, 1, 2);
 	addBranch(tryit, 4, 5);
-	addBranch(tryit, 1, 3);
-	addBranch(tryit, 2, 4);
+	addBranch(tryit, 2, 3);
+	//addBranch(tryit, 2, 4);
 	addBranch(tryit, 5, 0);
 	addBranch(tryit, 3, 4);
-	pathsPlayerTwo(tryit, 0, 2);
+	pathsPlayerOne(tryit, 0, 3);
+	pathsPlayerTwo(tryit, 0, 3);
 	/*while (1)
 	{
 		printf("1. Dodaj nov cvor u graf\n");
