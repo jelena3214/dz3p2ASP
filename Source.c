@@ -167,6 +167,7 @@ struct Qnode {
 	int* info;
 	int stepFlag;
 	int len;
+	int numofmoves;
 	struct Qnode* next;
 }QNODE;
 
@@ -182,17 +183,18 @@ struct queue* createQueue() {
 	return Q;
 }
 
-struct Qnode* createQueueNode(int size, int flag) {
+struct Qnode* createQueueNode(int size, int flag, int num) {
 	struct Qnode* newnode = malloc(sizeof(struct Qnode));
 	newnode->info = malloc(sizeof(int) * (size + 1));
 	newnode->next = NULL;
 	newnode->len = size;
 	newnode->stepFlag = flag;
+	newnode->numofmoves = num;
 	return newnode;
 }
 
-struct queue* insertQueue(struct queue* Q, int *info, int size, int flag) {
-	struct Qnode *newnode = createQueueNode(size, flag);
+struct queue* insertQueue(struct queue* Q, int *info, int size, int flag, int num) {
+	struct Qnode *newnode = createQueueNode(size, flag, num);
 	for (int i = 0; i < size; i++) {
 		newnode->info[i] = info[i];
 	}
@@ -237,8 +239,8 @@ int isNotVisited(int x, int *path, int size)
 	return 1;
 }
 
-void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
-	int minMove = INT_MAX;
+void pathsPlayerOne(struct graph *maingraph, int source, int destination, int *move1) {
+	(*move1) = INT_MAX;
 	struct queue *q = createQueue();
 	int *path = NULL;
 	int lenght = 0;
@@ -246,7 +248,7 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
 	lenght++;
-	q = insertQueue(q, path, lenght, 0);
+	q = insertQueue(q, path, lenght, 0, 0);
 
 	while (!QueueEmpty(q)) {
 		lenght = q->front->len;
@@ -255,11 +257,16 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 		
 
 		if (last == destination) {
-			if (lenght < minMove)minMove = lenght;
+			printf("Igrac broj 1:\n");
+			if (lenght - 1 < (*move1))(*move1) = lenght - 1;
 			for (int i = 0; i < lenght; i++) {
-				printf("%d ", path[i]);
+				if (i != lenght - 1) {
+					printf("%d -> ", path[i]);
+				}
+				else {
+					printf("%d\n", path[i]);
+				}
 			}
-			putchar('\n');
 		
 		}
 		struct node *p = maingraph->adjList[last].head;
@@ -271,17 +278,17 @@ void pathsPlayerOne(struct graph *maingraph, int source, int destination) {
 				}
 				newpath[lenght] = p->info;
 				
-				q = insertQueue(q, newpath, (lenght + 1), 0);
+				q = insertQueue(q, newpath, (lenght + 1), 0, 0);
 			}
 			p = p->next;
 		}
 	}
-	printf("MINMOVE : %d\n", minMove);
+	printf("MINMOVE : %d\n", (*move1));
 }
 //dodaj deo sta ako nema puta do tog cvora
 
-void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
-	int minMove = INT_MAX; //ovo stavi da bude info cvora jer se povecava za po jedan a ne len
+void pathsPlayerTwo(struct graph* maingraph, int source, int destination, int *move2) {
+	(*move2) = INT_MAX;
 	int flag;
 	struct queue* q = createQueue();
 	int* path = NULL;
@@ -290,7 +297,8 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 	path = realloc(path, sizeof(int) * (lenght + 1));
 	path[lenght] = source;
 	lenght++;
-	q = insertQueue(q, path, lenght, 1);
+	q = insertQueue(q, path, lenght, 1, 0);
+	int tempMove;
 
 	int* oneVisit = malloc(maingraph->numofNodes*sizeof(int));
 	int* twoVisit = malloc(maingraph->numofNodes*sizeof(int));
@@ -298,24 +306,30 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 		oneVisit[i] = INT_MAX;
 		twoVisit[i] = INT_MAX;
 	}
-
+	
 	while (!QueueEmpty(q)) {
+		tempMove = q->front->numofmoves;
 		lenght = q->front->len;
 		int flag = q->front->stepFlag;
 		path = popFromQueue(q, lenght);
 		int last = path[lenght - 1];
 		
 		if (last == destination) {
-			if (lenght < minMove)minMove = lenght;
+			printf("Igrac broj dva: \n");
+			if (tempMove < (*move2))(*move2) = tempMove;
 			for (int i = 0; i < lenght; i++) {
-				printf("%d ", path[i]);
+				if (i != lenght - 1) {
+					printf("%d -> ", path[i]);
+				}
+				else {
+					printf("%d\n", path[i]);
+				}
 			}
-			putchar('\n');
 			continue;
 		}
 		
-		//razgranici kad ide koji korak
 		if (flag) { //pomeranje za 1
+			tempMove++;
 			struct node* p = maingraph->adjList[last].head;
 			while (p != NULL) {
 				if (oneVisit[p->info] >= lenght + 1) {
@@ -325,17 +339,19 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 					}
 					newpath[lenght] = p->info;
 					oneVisit[p->info] = lenght + 1;
-					q = insertQueue(q, newpath, (lenght + 1), 0);
+					q = insertQueue(q, newpath, (lenght + 1), 0, tempMove);
 				}
 				p = p->next;
 			}
 		}
 		else {
+			tempMove++;
 			struct node* temp = maingraph->adjList[last].head;
 			int* visitedInthis = calloc(maingraph->numofNodes, sizeof(int));
 			while (temp != NULL) {
 				last = temp->info;
 				struct node* p = maingraph->adjList[last].head;
+				//ako je p NULL nema susede i igrac 2 je izgubio, nema gde da ode.
 				while (p != NULL) {
 					//za posecenost
 					if ((twoVisit[p->info] >= lenght + 2) || visitedInthis[p->info]) {
@@ -348,7 +364,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 						}
 						newpath[lenght] = temp->info;
 						newpath[lenght + 1] = p->info;
-						q = insertQueue(q, newpath, (lenght + 2), 1);
+						q = insertQueue(q, newpath, (lenght + 2), 1, tempMove);
 					}
 					p = p->next;
 				}
@@ -358,7 +374,7 @@ void pathsPlayerTwo(struct graph* maingraph, int source, int destination) {
 		}
 		
 	}
-	printf("MINMOVE : %d\n", minMove);
+	printf("MINMOVE : %d\n", (*move2));
 
 }
 
@@ -369,6 +385,9 @@ int main() {
 	scanf("%d", &graphSize);
 	int* inGraph = calloc(graphSize, sizeof(int));
 	struct graph* tryit = createGraph(graphSize);
+	int player1 = 0;
+	int player2 = 0;
+
 
 	addBranch(tryit, 0, 1);
 	addBranch(tryit, 5, 2);
@@ -378,8 +397,20 @@ int main() {
 	//addBranch(tryit, 2, 4);
 	addBranch(tryit, 5, 0);
 	addBranch(tryit, 3, 4);
-	pathsPlayerOne(tryit, 0, 3);
-	pathsPlayerTwo(tryit, 0, 3);
+	pathsPlayerOne(tryit, 0, 3, &player1);
+	putchar('\n');
+	pathsPlayerTwo(tryit, 0, 3, &player2);
+
+	if (player1 > player2) {
+		printf("Igrac broj 1 je pobedio\n");
+	}
+	else if (player1 < player2) {
+		printf("Igrac broj 2 je pobedio\n");
+	}
+	else {
+		printf("Nereseno je\n");
+	}
+
 	/*while (1)
 	{
 		printf("1. Dodaj nov cvor u graf\n");
