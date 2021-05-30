@@ -388,30 +388,7 @@ int main() {
 	int player1 = 0;
 	int player2 = 0;
 
-
-	addBranch(tryit, 0, 1);
-	addBranch(tryit, 5, 2);
-	addBranch(tryit, 1, 2);
-	addBranch(tryit, 4, 5);
-	addBranch(tryit, 2, 3);
-	//addBranch(tryit, 2, 4);
-	addBranch(tryit, 5, 0);
-	addBranch(tryit, 3, 4);
-	pathsPlayerOne(tryit, 0, 3, &player1);
-	putchar('\n');
-	pathsPlayerTwo(tryit, 0, 3, &player2);
-
-	if (player1 > player2) {
-		printf("Igrac broj 1 je pobedio\n");
-	}
-	else if (player1 < player2) {
-		printf("Igrac broj 2 je pobedio\n");
-	}
-	else {
-		printf("Nereseno je\n");
-	}
-
-	/*while (1)
+	while (1)
 	{
 		printf("1. Dodaj nov cvor u graf\n");
 		printf("2. Izbrisi cvor iz grafa\n");
@@ -419,8 +396,8 @@ int main() {
 		printf("4. Ukloni granu izmedju dva cvora\n");
 		printf("5. Ispisi graf\n");
 		printf("6. Izbrisi graf\n");
-		printf("7. Kraj programa\n");
-		printf("8. Putevi\n");
+		printf("7. Ne ljuti se covece\n");
+		printf("8. Kraj programa\n");
 		printf("Unesite opciju :  ");
 		scanf("%d", &choice);
 
@@ -478,13 +455,31 @@ int main() {
 		if (choice == 6) {
 			deleteGraph(tryit, inGraph);
 		}
-		if (choice == 7) {
+		if (choice == 8) {
 			exit(0);
 		}
-		if (choice == 8) {
-			pathsPlayerOne(tryit, 2, 3);
+		if (choice == 7) {
+			int cilj;
+			int pocetak;
+			printf("Unesite cvor OD kog se krece: ");
+			scanf("%d", &pocetak);
+			printf("Unesite cvor DO kog se krece: ");
+			scanf("%d", &cilj);
+			pathsPlayerOne(tryit, pocetak, cilj, &player1);
+			putchar('\n');
+			pathsPlayerTwo(tryit, pocetak, cilj, &player2);
+
+			if (player1 > player2) {
+				printf("Igrac broj 2 je pobedio\n");
+			}
+			else if (player1 < player2) {
+				printf("Igrac broj 1 je pobedio\n");
+			}
+			else {
+				printf("Nereseno je\n");
+			}
 		}
 	}
-	*/
+	
 	return 0;
 }
